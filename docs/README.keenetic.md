@@ -51,26 +51,26 @@ Telegram
 ### Linux / macOS / Git Bash
 
 ```bash
-curl -sL https://raw.githubusercontent.com/Flowseal/tg-ws-proxy/main/packaging/keenetic/install-keenetic.sh | bash
+bash <(curl -sL https://raw.githubusercontent.com/mrzvSSL/keenetic-tg-ws/main/packaging/keenetic/install-keenetic.sh)
 ```
 
 ### Windows (PowerShell)
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File packaging\keenetic\install-keenetic.sh
+powershell -ExecutionPolicy Bypass -File packaging\keenetic\install-keenetic.ps1
 ```
 
 или в **Git Bash**:
 
 ```bash
-curl -sL https://raw.githubusercontent.com/Flowseal/tg-ws-proxy/main/packaging/keenetic/install-keenetic.sh | bash
+curl -sL https://raw.githubusercontent.com/mrzvSSL/keenetic-tg-ws/main/packaging/keenetic/install-keenetic.sh | bash
 ```
 
 ### Без вопросов (автоматически)
 
 ```bash
 TGWS_NONINTERACTIVE=1 TGWS_ROUTER_IP=192.168.1.1 TGWS_ROUTER_PASS=пароль \
-  curl -sL https://raw.githubusercontent.com/Flowseal/tg-ws-proxy/main/packaging/keenetic/install-keenetic.sh | bash
+  curl -sL https://raw.githubusercontent.com/mrzvSSL/keenetic-tg-ws/main/packaging/keenetic/install-keenetic.sh | bash
 ```
 
 (для пароля нужен `sshpass`, иначе введёте пароль SSH вручную)
@@ -80,7 +80,7 @@ TGWS_NONINTERACTIVE=1 TGWS_ROUTER_IP=192.168.1.1 TGWS_ROUTER_PASS=пароль \
 На роутере в `exec sh`:
 
 ```sh
-wget -qO- https://raw.githubusercontent.com/Flowseal/tg-ws-proxy/main/packaging/keenetic/install-remote.sh | sh
+wget -qO- https://raw.githubusercontent.com/mrzvSSL/keenetic-tg-ws/main/packaging/keenetic/install-remote.sh | sh
 ```
 
 ### Перед установкой в веб-интерфейсе
