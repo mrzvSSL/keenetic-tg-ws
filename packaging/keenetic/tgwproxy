@@ -1,0 +1,83 @@
+#!/bin/sh
+# Launcher for TG WS Proxy on Entware (Keenetic and similar routers).
+
+set -e
+
+CONF="${TGWSPROXY_CONF:-/opt/etc/tg-ws-proxy/tgwproxy.conf}"
+APP_ROOT="${TGWSPROXY_ROOT:-/opt/share/tg-ws-proxy}"
+PID_FILE="/opt/var/run/tg-ws-proxy.pid"
+LOG_FILE="/opt/var/log/tg-ws-proxy.log"
+
+if [ -f "$CONF" ]; then
+    # shellcheck disable=SC1090
+    . "$CONF"
+fi
+
+HOST="${HOST:-0.0.0.0}"
+PORT="${PORT:-1443}"
+SECRET="${SECRET:-}"
+DC_IPS="${DC_IPS:-1:149.154.175.50 2:149.154.167.220 4:149.154.167.220 5:149.154.171.5}"
+POOL_SIZE="${POOL_SIZE:-1}"
+BUF_KB="${BUF_KB:-64}"
+NO_CFPROXY="${NO_CFPROXY:-0}"
+FAKE_TLS_DOMAIN="${FAKE_TLS_DOMAIN:-}"
+VERBOSE="${VERBOSE:-0}"
+PROXY_PROTOCOL="${PROXY_PROTOCOL:-0}"
+
+PYTHON=""
+for candidate in /opt/bin/python3 /opt/bin/python /usr/bin/python3; do
+    if [ -x "$candidate" ]; then
+        PYTHON="$candidate"
+        break
+    fi
+done
+
+if [ -z "$PYTHON" ]; then
+    echo "tg-ws-proxy: python3 not found. Install: opkg install python3-light" >&2
+    exit 1
+fi
+
+if [ ! -f "$APP_ROOT/proxy/tg_ws_proxy.py" ]; then
+    echo "tg-ws-proxy: application not found in $APP_ROOT" >&2
+    exit 1
+fi
+
+mkdir -p "$(dirname "$PID_FILE")" "$(dirname "$LOG_FILE")"
+
+if [ -z "$SECRET" ] && [ -f /opt/etc/tg-ws-proxy/secret ]; then
+    SECRET="$(tr -d ' \n\r\t' < /opt/etc/tg-ws-proxy/secret)"
+fi
+
+args="--host $HOST --port $PORT --pool-size $POOL_SIZE --buf-kb $BUF_KB"
+args="$args --log-file $LOG_FILE --log-max-mb 2 --log-backups 1"
+
+for dc in $DC_IPS; do
+    args="$args --dc-ip $dc"
+done
+
+if [ -n "$SECRET" ]; then
+    args="$args --secret $SECRET"
+fi
+
+if [ "$NO_CFPROXY" = "1" ]; then
+    args="$args --no-cfproxy"
+fi
+
+if [ -n "$FAKE_TLS_DOMAIN" ]; then
+    args="$args --fake-tls-domain $FAKE_TLS_DOMAIN"
+fi
+
+if [ "$PROXY_PROTOCOL" = "1" ]; then
+    args="$args --proxy-protocol"
+fi
+
+if [ "$VERBOSE" = "1" ]; then
+    args="$args -v"
+fi
+
+export PYTHONPATH="$APP_ROOT${PYTHONPATH:+:$PYTHONPATH}"
+export PYTHONUNBUFFERED=1
+
+cd "$APP_ROOT" || exit 1
+# shellcheck disable=SC2086
+exec "$PYTHON" -u proxy/tg_ws_proxy.py $args "$@"

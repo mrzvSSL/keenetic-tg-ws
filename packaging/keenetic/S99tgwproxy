@@ -1,0 +1,93 @@
+#!/bin/sh
+# Entware init script for TG WS Proxy
+# Installed as /opt/etc/init.d/S99tgwproxy
+
+ENABLED=1
+PROG=/opt/bin/tgwproxy
+PID_FILE=/opt/var/run/tg-ws-proxy.pid
+LOG_FILE=/opt/var/log/tg-ws-proxy.log
+
+start() {
+    if [ "$ENABLED" != "1" ]; then
+        echo "tg-ws-proxy is disabled in init script"
+        return 0
+    fi
+
+    if [ -f "$PID_FILE" ]; then
+        pid="$(cat "$PID_FILE" 2>/dev/null || true)"
+        if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+            echo "tg-ws-proxy already running (pid $pid)"
+            return 0
+        fi
+        rm -f "$PID_FILE"
+    fi
+
+    echo "Starting tg-ws-proxy..."
+    mkdir -p "$(dirname "$PID_FILE")" "$(dirname "$LOG_FILE")"
+    # BusyBox on Keenetic has no nohup — background with closed stdin is enough.
+    "$PROG" >>"$LOG_FILE" 2>&1 </dev/null &
+    echo $! >"$PID_FILE"
+    sleep 3
+
+    pid="$(cat "$PID_FILE" 2>/dev/null || true)"
+    if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+        echo "tg-ws-proxy started (pid $pid)"
+        return 0
+    fi
+
+    echo "tg-ws-proxy failed to start, see $LOG_FILE" >&2
+    rm -f "$PID_FILE"
+    return 1
+}
+
+stop() {
+    if [ ! -f "$PID_FILE" ]; then
+        echo "tg-ws-proxy is not running"
+        return 0
+    fi
+
+    pid="$(cat "$PID_FILE" 2>/dev/null || true)"
+    if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+        echo "Stopping tg-ws-proxy (pid $pid)..."
+        kill "$pid" 2>/dev/null || true
+        i=0
+        while kill -0 "$pid" 2>/dev/null; do
+            i=$((i + 1))
+            if [ "$i" -ge 10 ]; then
+                kill -9 "$pid" 2>/dev/null || true
+                break
+            fi
+            sleep 1
+        done
+    fi
+    rm -f "$PID_FILE"
+    echo "tg-ws-proxy stopped"
+}
+
+status() {
+    if [ -f "$PID_FILE" ]; then
+        pid="$(cat "$PID_FILE" 2>/dev/null || true)"
+        if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+            echo "tg-ws-proxy is running (pid $pid)"
+            return 0
+        fi
+    fi
+    echo "tg-ws-proxy is not running"
+    return 1
+}
+
+restart() {
+    stop
+    start
+}
+
+case "$1" in
+    start) start ;;
+    stop) stop ;;
+    restart) restart ;;
+    status) status ;;
+    *)
+        echo "Usage: $0 {start|stop|restart|status}"
+        exit 1
+        ;;
+esac

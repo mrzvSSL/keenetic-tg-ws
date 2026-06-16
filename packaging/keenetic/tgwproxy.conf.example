@@ -1,0 +1,24 @@
+# TG WS Proxy — конфигурация для Keenetic / Entware
+# Скопируйте в /opt/etc/tg-ws-proxy/tgwproxy.conf и отредактируйте.
+
+# Слушать на всех интерфейсах LAN (обязательно для доступа с телефонов/ПК)
+HOST=0.0.0.0
+PORT=1443
+
+# 32 hex-символа. Оставьте пустым — сгенерируется при первом запуске.
+SECRET=
+
+# Целевые IP Telegram DC (через пробел)
+DC_IPS="1:149.154.175.50 2:149.154.167.220 4:149.154.167.220 5:149.154.171.5"
+
+# Параметры для Hero 4G+ (256 МБ RAM)
+POOL_SIZE=2
+BUF_KB=128
+
+# Cloudflare fallback (отключите при нехватке памяти: NO_CFPROXY=1)
+NO_CFPROXY=0
+
+# Fake TLS (ee-secret), опционально:
+# FAKE_TLS_DOMAIN=example.com
+
+# VERBOSE=1
